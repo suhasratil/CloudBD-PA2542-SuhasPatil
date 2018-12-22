@@ -69,27 +69,40 @@
   # SHELL
 
 Vagrant.configure('2') do |config|
-config.puppet_install.puppet_version = :latest 
+config.vm.box = "ubuntu/xenial64"
+#config.puppet_install.validate_version = false
+config.puppet_install.puppet_version = :latest
+config.puppet_install.install_url = 'https://gist.githubusercontent.com/petems/6723c2eedb9d32d7ad97/raw/990ff448f6430aa015e208668a3cecb3f1db0d4b/purge_old_install_new.sh' 
 #config.vm.provision :puppet do |puppet|
 #puppet.manifests_path = "my_manifests"
 #puppet.manifest_file = "my_default.pp"
 #end
 
+ # config.vm.synced_folder ".", "/Users/suhaspatil/vagrant_getting_started/environments", type: "rsync"
+#    rsync__exclude: ".git/"
+config.vm.synced_folder ".", "/vagrant", type: "rsync"
+#config.vm.synced_folder ".", "/Users/suhaspatil/vagrant_getting_started/environments", disabled: true
+
 config.vm.provision :puppet do |pup|
 pup.environment_path="environments"
 pup.environment = "test"
+pup.synced_folder_type = "rsync"
 end
+
+
   config.vm.define "appserver" do |config|
 config.vm.hostname = 'appserver'     
  config.vm.provider :digital_ocean do |provider, override|
         override.ssh.private_key_path = '~/.ssh/id_rsa'
-        override.vm.box = 'digital_ocean'
-        override.vm.box_url = "https://github.com/devopsgroup-io/vagrant-digitalocean/raw/master/box/digital_ocean.box"
+       #override.vm.box = 'ubuntu/xenial64'
+       #override.vm.box = 'digital_ocean'
+       #override.vm.box_url = "https://github.com/devopsgroup-io/vagrant-digitalocean/raw/master/box/digital_ocean.box"
         override.nfs.functional = false
         provider.token = 'adf147f76912ca317d656b9573f5aa7f00ced11e92689f8a31543403567d25f1'
-        provider.image = 'ubuntu-14-04-x64'
-        provider.region = 'nyc1'
+        #provider.image = 'ubuntu-14-04-x64'
+	provider.region = 'nyc1'
         provider.size = '512mb'
+        provider.ssh_key_name = 'suhas'
       end
   end
 
@@ -97,13 +110,21 @@ config.vm.define "dbserver" do |config|
 config.vm.hostname = 'dbserver'
       config.vm.provider :digital_ocean do |provider, override|
         override.ssh.private_key_path = '~/.ssh/id_rsa'
-        override.vm.box = 'digital_ocean'
-        override.vm.box_url = "https://github.com/devopsgroup-io/vagrant-digitalocean/raw/master/box/digital_ocean.box"
+        #override.vm.box = 'digital_ocean'
+        #override.vm.box_url = "https://github.com/devopsgroup-io/vagrant-digitalocean/raw/master/box/digital_ocean.box"
         override.nfs.functional = false
         provider.token = 'adf147f76912ca317d656b9573f5aa7f00ced11e92689f8a31543403567d25f1'
-        provider.image = 'ubuntu-14-04-x64'
+        #provider.image = 'ubuntu-14-04-x64'
         provider.region = 'nyc3'
         provider.size = '512mb'
+        provider.ssh_key_name = 'suhas'
       end
+  end
+
+
+ config.vm.define "web" do |web|
+    web.vm.box = "hashicorp/precise64"
+    web.vm.hostname ="webserver"
+    web.vm.network :forwarded_port, guest: 80, host: 8080
   end
 end
